@@ -65,6 +65,19 @@ taskflow-api/
 
 Instructions for installing dependencies and running the API will be added in Sprint 1.
 
+## Development Workflow
+
+All changes go through a pull request. Nothing is committed directly to `main`.
+
+1. Update `main`: `git switch main && git pull`
+2. Create a branch: `git switch -c <type>/<short-description>`
+3. Make small, focused commits using [Conventional Commits](https://www.conventionalcommits.org/)
+   (`feat:`, `fix:`, `docs:`, `test:`, `chore:`)
+4. Push the branch: `git push -u origin <branch-name>`
+5. Open a pull request into `main`, review it, and merge
+6. Sync locally: `git switch main && git pull`, then delete the branch
+
+
 ## Roadmap
 
 - [x] Sprint 0: Project setup and GitHub
