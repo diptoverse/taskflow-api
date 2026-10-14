@@ -6,7 +6,7 @@ Users will be able to register, log in, and manage their own tasks, with
 pagination, filtering, and sorting. This project is built incrementally in
 sprints as a hands-on backend engineering exercise.
 
-> **Status:** 🚧 Sprint 0: project setup. No application code yet.
+> **Status:** 🚧 Sprint 1: FastAPI foundation. The API runs locally with a health check endpoint.
 
 ## Tech Stack
 
@@ -25,12 +25,16 @@ sprints as a hands-on backend engineering exercise.
 
 ```
 taskflow-api/
-├── app/              # Application code
-├── tests/            # Automated tests
-├── .env.example      # Template for environment variables
-├── pyproject.toml    # Project metadata and dependencies
+├── app/
+│   ├── core/
+│   │   └── config.py   # Settings loaded from environment / .env
+│   └── main.py         # FastAPI app entry point
+├── tests/              # Automated tests
+├── .env.example        # Template for environment variables
+├── pyproject.toml      # Project metadata and dependencies
 └── README.md
 ```
+
 
 ## Getting Started
 
@@ -63,7 +67,50 @@ taskflow-api/
 
    Then edit `.env` and replace the placeholder values. Never commit `.env`.
 
-Instructions for installing dependencies and running the API will be added in Sprint 1.
+4. **Install the project and its dependencies**
+
+   ```bash
+   pip install -e .
+   ```
+
+   `-e` installs in editable mode, so code changes apply without reinstalling.
+
+### Run the API
+
+```bash
+uvicorn app.main:app --reload
+```
+
+The API is available at http://127.0.0.1:8000. `--reload` restarts the server on file changes (development only).
+
+Check that it is running:
+
+```bash
+curl http://127.0.0.1:8000/health
+# {"status":"ok","environment":"development"}
+```
+
+### API Documentation
+
+FastAPI generates interactive documentation automatically:
+
+| URL | Description |
+|-----|-------------|
+| http://127.0.0.1:8000/docs | Swagger UI: try endpoints in the browser |
+| http://127.0.0.1:8000/redoc | ReDoc: read-only reference |
+| http://127.0.0.1:8000/openapi.json | Raw OpenAPI specification |
+
+## Configuration
+
+Settings are read from environment variables, falling back to `.env`, then to defaults
+(see `app/core/config.py`). Real environment variables take priority over `.env`.
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `APP_NAME` | `TaskFlow API` | Name shown in the API docs |
+| `ENVIRONMENT` | `development` | One of `development`, `test`, `production` |
+| `DEBUG` | `false` | Detailed error output. Never enable in production |
+
 
 ## Development Workflow
 
@@ -81,7 +128,7 @@ All changes go through a pull request. Nothing is committed directly to `main`.
 ## Roadmap
 
 - [x] Sprint 0: Project setup and GitHub
-- [ ] Sprint 1: FastAPI foundation
+- [x] Sprint 1: FastAPI foundation
 - [ ] Sprint 2: PostgreSQL and SQLAlchemy
 - [ ] Sprint 3: Task CRUD and validation
 - [ ] Sprint 4: Authentication
