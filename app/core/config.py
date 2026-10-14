@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     app_name: str = "TaskFlow API"
     environment: Literal["development", "test", "production"] = "development"
     debug: bool = False
+    database_url: str
 
 
-settings = Settings()
+settings = Settings()  # pyright: ignore[reportCallIssue]
