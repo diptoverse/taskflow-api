@@ -1,25 +1,13 @@
 # TaskFlow API
 
-A RESTful task management API built with FastAPI and PostgreSQL.
+A RESTful task management API built with FastAPI and PostgreSQL, developed sprint by sprint
+as a hands-on backend engineering project.
 
-Users will be able to register, log in, and manage their own tasks, with
-pagination, filtering, and sorting. This project is built incrementally in
-sprints as a hands-on backend engineering exercise.
-
-> **Status:** 🚧 Sprint 1: FastAPI foundation. The API runs locally with a health check endpoint.
+> **Status:** 🚧 Sprint 2: tasks can be created and listed, and are stored in PostgreSQL.
 
 ## Tech Stack
 
-| Layer            | Technology            |
-|------------------|-----------------------|
-| Language         | Python 3.13           |
-| Web framework    | FastAPI               |
-| Database         | PostgreSQL            |
-| ORM              | SQLAlchemy            |
-| Migrations       | Alembic               |
-| Testing          | Pytest                |
-| Containerization | Docker, Docker Compose |
-| CI               | GitHub Actions        |
+Python 3.13 · FastAPI · PostgreSQL · SQLAlchemy · Alembic · Pytest · Docker Compose · GitHub Actions
 
 ## Project Structure
 
@@ -27,109 +15,87 @@ sprints as a hands-on backend engineering exercise.
 taskflow-api/
 ├── app/
 │   ├── core/
-│   │   └── config.py   # Settings loaded from environment / .env
-│   └── main.py         # FastAPI app entry point
-├── tests/              # Automated tests
-├── .env.example        # Template for environment variables
-├── pyproject.toml      # Project metadata and dependencies
-└── README.md
+│   │   ├── config.py     # Settings from environment / .env
+│   │   └── database.py   # Engine, sessions, Base, get_db
+│   ├── models/task.py    # Task model (tasks table)
+│   └── main.py           # App entry point and routes
+├── migrations/versions/  # Alembic migration scripts
+├── alembic.ini           # Alembic configuration
+├── compose.yaml          # Local PostgreSQL
+├── .env.example          # Environment variable template
+└── pyproject.toml        # Metadata and dependencies
 ```
-
 
 ## Getting Started
 
-### Prerequisites
-
-- Python 3.13+
-- Git
-
-### Setup
-
-1. **Clone the repository**
-
-   ```bash
-   git clone git@github.com:diptoverse/taskflow-api.git
-   cd taskflow-api
-   ```
-
-2. **Create and activate a virtual environment**
-
-   ```bash
-   python3.13 -m venv .venv
-   source .venv/bin/activate
-   ```
-
-3. **Create your local environment file**
-
-   ```bash
-   cp .env.example .env
-   ```
-
-   Then edit `.env` and replace the placeholder values. Never commit `.env`.
-
-4. **Install the project and its dependencies**
-
-   ```bash
-   pip install -e .
-   ```
-
-   `-e` installs in editable mode, so code changes apply without reinstalling.
-
-### Run the API
+**Prerequisites:** Python 3.13+, Git, Docker Desktop
 
 ```bash
-uvicorn app.main:app --reload
+git clone git@github.com:diptoverse/taskflow-api.git
+cd taskflow-api
+python3.13 -m venv .venv && source .venv/bin/activate
+cp .env.example .env          # then set real values (see Configuration)
+pip install -e .              # install in editable mode
+docker compose up -d          # start PostgreSQL on localhost:5433
+alembic upgrade head          # create the tables
+uvicorn app.main:app --reload # run the API on http://127.0.0.1:8000
 ```
 
-The API is available at http://127.0.0.1:8000. `--reload` restarts the server on file changes (development only).
+## API
 
-Check that it is running:
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/health` | Health check |
+| `POST` | `/tasks` | Create a task. Body: `title` (required), `description` (optional) |
+| `GET` | `/tasks` | List all tasks, oldest first |
 
 ```bash
-curl http://127.0.0.1:8000/health
-# {"status":"ok","environment":"development"}
+curl -X POST http://127.0.0.1:8000/tasks -H "Content-Type: application/json" -d '{"title": "Buy milk"}'
+curl http://127.0.0.1:8000/tasks
 ```
 
-### API Documentation
-
-FastAPI generates interactive documentation automatically:
-
-| URL | Description |
-|-----|-------------|
-| http://127.0.0.1:8000/docs | Swagger UI: try endpoints in the browser |
-| http://127.0.0.1:8000/redoc | ReDoc: read-only reference |
-| http://127.0.0.1:8000/openapi.json | Raw OpenAPI specification |
+Interactive docs: http://127.0.0.1:8000/docs
 
 ## Configuration
 
-Settings are read from environment variables, falling back to `.env`, then to defaults
-(see `app/core/config.py`). Real environment variables take priority over `.env`.
+Set in `.env` (never commit it). Real environment variables override `.env`.
 
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `APP_NAME` | `TaskFlow API` | Name shown in the API docs |
-| `ENVIRONMENT` | `development` | One of `development`, `test`, `production` |
-| `DEBUG` | `false` | Detailed error output. Never enable in production |
+| `ENVIRONMENT` | `development` | `development`, `test` or `production` |
+| `DEBUG` | `false` | Detailed errors and SQL logging. Never in production |
+| `DATABASE_URL` | required | e.g. `postgresql+psycopg://taskflow_user:<password>@localhost:5433/taskflow` |
+| `POSTGRES_USER` / `POSTGRES_PASSWORD` / `POSTGRES_DB` | required | Used by Docker Compose to create the database on first start |
 
+Use a URL-safe password (`openssl rand -hex 16`) and the same value in `POSTGRES_PASSWORD`
+and `DATABASE_URL`.
+
+## Database
+
+- `docker compose down` stops PostgreSQL and keeps data. `docker compose down -v` **deletes all data**.
+- After changing a model, create and apply a migration, then commit both together:
+
+```bash
+alembic revision --autogenerate -m "describe the change"   # review the new file first
+alembic upgrade head
+```
 
 ## Development Workflow
 
-All changes go through a pull request. Nothing is committed directly to `main`.
+All changes go through a pull request into `main`.
 
-1. Update `main`: `git switch main && git pull`
-2. Create a branch: `git switch -c <type>/<short-description>`
-3. Make small, focused commits using [Conventional Commits](https://www.conventionalcommits.org/)
-   (`feat:`, `fix:`, `docs:`, `test:`, `chore:`)
-4. Push the branch: `git push -u origin <branch-name>`
-5. Open a pull request into `main`, review it, and merge
-6. Sync locally: `git switch main && git pull`, then delete the branch
-
+1. `git switch main && git pull`
+2. `git switch -c <type>/<short-description>`
+3. Small commits using [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `docs:`, `test:`, `chore:`)
+4. `git push -u origin <branch-name>`, open a PR, review, merge
+5. `git switch main && git pull`, then delete the branch
 
 ## Roadmap
 
 - [x] Sprint 0: Project setup and GitHub
 - [x] Sprint 1: FastAPI foundation
-- [ ] Sprint 2: PostgreSQL and SQLAlchemy
+- [x] Sprint 2: PostgreSQL and SQLAlchemy
 - [ ] Sprint 3: Task CRUD and validation
 - [ ] Sprint 4: Authentication
 - [ ] Sprint 5: Authorization and ownership
